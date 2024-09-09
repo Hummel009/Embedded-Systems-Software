@@ -1,0 +1,28 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "openocd",
+      "cwd": "${workspaceRoot}",
+      "preLaunchTask": "Build (debug)",
+      "runToEntryPoint": "main",
+      "executable": "${workspaceRoot}/target/thumbv7m-none-eabi/debug/program",
+      "gdbPath": "gdb-multiarch",
+      "device": "STM32F103RBT6",
+      "configFiles": [
+        "interface/stlink.cfg",
+        "target/stm32f1x.cfg"
+      ],
+      "preLaunchCommands": [
+        "monitor arm semihosting enable"
+      ],
+      "svdFile": "${workspaceRoot}/stm32f103.svd"
+    }
+  ]
+}

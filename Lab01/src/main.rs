@@ -14,14 +14,14 @@ fn main() -> ! {
     // Получаем доступ к периферийным устройствам
     let dp = pac::Peripherals::take().unwrap();
 
-    // Получаем доступ к периферийному устройству GPIOA
+    // Получаем доступ к периферийным устройствам GPIOA и GPIOC
     let mut gpioa = dp.GPIOA.split();
+    let mut gpioc = dp.GPIOC.split();
 
-    // Конфигурируем вывод A5 как выход с подъемом.
-    // Регистры `crl` передаются функции для настройки порта.
-    // Для пинов 8-15 следует передавать crh.
+    // PA5 — лампочка. PC13 — кнопка
+    // Регистры `crl` передаются функции для настройки порта. Для пинов 8-15 следует передавать crh.
     let mut led = gpioa.pa5.into_push_pull_output(&mut gpioa.crl);
-    let button = gpioa.pa0.into_pull_up_input(&mut gpioa.crl);
+    let button = gpioc.pc13.into_pull_up_input(&mut gpioc.crh);
 
     let mut once_lighted = false;
     let mut once_pressed = false;

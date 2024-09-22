@@ -28,7 +28,11 @@ fn main() -> ! {
     
     loop {
         if button.is_low() && !once_pressed {
-            once_pressed = true;
+            // Устранение гипотетического дребезга контактов 0.1 мс
+            delay((0.1 * 4_000_000.0) as u32);
+            if button.is_low() {
+                once_pressed = true;
+            }
         }
 
         if once_pressed && !once_lighted {

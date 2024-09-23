@@ -2,10 +2,10 @@
 #![no_main]
 #![no_std]
 
-use panic_halt as _;
 use core::mem::MaybeUninit;
 use cortex_m_rt::entry;
 use pac::interrupt;
+use panic_halt as _;
 use stm32f1xx_hal::gpio::*;
 use stm32f1xx_hal::{pac, prelude::*};
 
@@ -29,7 +29,7 @@ fn main() -> ! {
     // Инициализация кнопки на PC13
     let button = unsafe { &mut *BUTTON.as_mut_ptr() };
     *button = gpioc.pc13.into_floating_input(&mut gpioc.crh);
-    
+
     // Настройка кнопки как источника прерывания
     button.make_interrupt_source(&mut afio);
     button.trigger_on_edge(&mut dp.EXTI, Edge::Falling);

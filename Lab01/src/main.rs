@@ -32,24 +32,24 @@ fn main() -> ! {
     
     // Настройка кнопки как источника прерывания
     button.make_interrupt_source(&mut afio);
-    button.trigger_on_edge(&mut dp.EXTI, Edge::RisingFalling);
+    button.trigger_on_edge(&mut dp.EXTI, Edge::Falling);
     button.enable_interrupt(&mut dp.EXTI);
 
     unsafe {
-        pac::NVIC::unmask(pac::Interrupt::EXTI9_5);
+        pac::NVIC::unmask(pac::Interrupt::EXTI15_10);
     }
 
     loop {}
 }
 
 #[interrupt]
-fn EXTI9_5() {
+fn EXTI15_10() {
     let led = unsafe { &mut *LED.as_mut_ptr() };
     let button = unsafe { &mut *BUTTON.as_mut_ptr() };
 
     if button.check_interrupt() {
-        led.set_high(); // Включаем светодиод
+        led.toggle();
 
-        button.clear_interrupt_pending_bit(); // Сбрасываем флаг прерывания
+        button.clear_interrupt_pending_bit();
     }
 }

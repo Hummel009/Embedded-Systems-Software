@@ -3,6 +3,7 @@
 #![no_std]
 
 use core::mem::MaybeUninit;
+use cortex_m::asm;
 use cortex_m_rt::entry;
 use pac::interrupt;
 use panic_halt as _;
@@ -48,6 +49,10 @@ fn EXTI15_10() {
     let button = unsafe { &mut *BUTTON.as_mut_ptr() };
 
     if button.check_interrupt() {
+        for _ in 0..1_000_000 {
+            asm::nop();
+        }
+
         led.toggle();
 
         button.clear_interrupt_pending_bit();

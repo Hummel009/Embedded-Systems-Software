@@ -1,53 +1,55 @@
-#![deny(unsafe_code)]
-#![no_std]
+#![allow(clippy::empty_loop)]
 #![no_main]
+#![no_std]
 
 use panic_halt as _;
-
-use cortex_m::asm::delay;
+use core::mem::MaybeUninit;
 use cortex_m_rt::entry;
-use hal::{pac, prelude::*};
-use stm32f1xx_hal as hal;
+use pac::interrupt;
+use stm32f1xx_hal::gpio::*;
+use stm32f1xx_hal::{pac, prelude::*};
+
+static mut LED: MaybeUninit<stm32f1xx_hal::gpio::gpioa::PA5<Output<PushPull>>> =
+    MaybeUninit::uninit();
+static mut BUTTON: MaybeUninit<stm32f1xx_hal::gpio::gpioc::PC13<Input<Floating>>> =
+    MaybeUninit::uninit();
 
 #[entry]
 fn main() -> ! {
-    // Получаем доступ к периферийным устройствам
-    let dp = pac::Peripherals::take().unwrap();
+    let mut dp = pac::Peripherals::take().unwrap();
 
-    // Получаем доступ к периферийным устройствам GPIOA и GPIOC
     let mut gpioa = dp.GPIOA.split();
     let mut gpioc = dp.GPIOC.split();
+    let mut afio = dp.AFIO.constrain();
 
-    // PA5 — лампочка. PC13 — кнопка
-    // Регистры `crl` передаются функции для настройки порта. Для пинов 8-15 следует передавать crh.
-    let mut led = gpioa.pa5.into_push_pull_output(&mut gpioa.crl);
-    let button = gpioc.pc13.into_pull_up_input(&mut gpioc.crh);
+    // Инициализация светодиода на PA5
+    let led = unsafe { &mut *LED.as_mut_ptr() };
+    *led = gpioa.pa5.into_push_pull_output(&mut gpioa.crl);
 
-    let mut once_lighted = false;
-    let mut once_pressed = false;
+    // Инициализация кнопки на PC13
+    let button = unsafe { &mut *BUTTON.as_mut_ptr() };
+    *button = gpioc.pc13.into_floating_input(&mut gpioc.crh);
     
-    loop {
-        if button.is_low() && !once_pressed {
-            // Устранение гипотетического дребезга контактов 0.1 мс
-            delay((0.1 * 4_000_000.0) as u32);
-            if button.is_low() {
-                once_pressed = true;
-            }
-        }
+    // Настройка кнопки как источника прерывания
+    button.make_interrupt_source(&mut afio);
+    button.trigger_on_edge(&mut dp.EXTI, Edge::RisingFalling);
+    button.enable_interrupt(&mut dp.EXTI);
 
-        if once_pressed && !once_lighted {
-            once_lighted = true;
-            
-            // 4 МГЦ — тактовая чистота, поэтому 4 млн. циклов = 1 секунда
-            delay(5 * 4_000_000);
+    unsafe {
+        pac::NVIC::unmask(pac::Interrupt::EXTI9_5);
+    }
 
-            // Лампочка зажигается
-            led.set_high();
+    loop {}
+}
 
-            delay(5 * 4_000_000);
+#[interrupt]
+fn EXTI9_5() {
+    let led = unsafe { &mut *LED.as_mut_ptr() };
+    let button = unsafe { &mut *BUTTON.as_mut_ptr() };
 
-            // Лампочка гаснет
-            led.set_low();
-        }
+    if button.check_interrupt() {
+        led.set_high(); // Включаем светодиод
+
+        button.clear_interrupt_pending_bit(); // Сбрасываем флаг прерывания
     }
 }

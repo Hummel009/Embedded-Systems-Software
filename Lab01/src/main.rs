@@ -4,16 +4,16 @@
 
 use core::mem::MaybeUninit;
 use cortex_m::asm;
+use cortex_m::asm::wfi;
 use cortex_m_rt::entry;
-use pac::interrupt;
 use panic_halt as _;
 use stm32f1xx_hal::gpio::*;
-use stm32f1xx_hal::{pac, prelude::*};
+use stm32f1xx_hal::pac;
+use stm32f1xx_hal::pac::interrupt;
+use stm32f1xx_hal::prelude::*;
 
-static mut LED: MaybeUninit<stm32f1xx_hal::gpio::gpioa::PA5<Output<PushPull>>> =
-    MaybeUninit::uninit();
-static mut BUTTON: MaybeUninit<stm32f1xx_hal::gpio::gpioc::PC13<Input<Floating>>> =
-    MaybeUninit::uninit();
+static mut LED: MaybeUninit<gpioa::PA5<Output<PushPull>>> = MaybeUninit::uninit();
+static mut BUTTON: MaybeUninit<gpioc::PC13<Input<Floating>>> = MaybeUninit::uninit();
 
 #[entry]
 fn main() -> ! {
@@ -40,7 +40,9 @@ fn main() -> ! {
         pac::NVIC::unmask(pac::Interrupt::EXTI15_10);
     }
 
-    loop {}
+    loop {
+        wfi();
+    }
 }
 
 #[interrupt]
@@ -52,8 +54,8 @@ fn EXTI15_10() {
         for _ in 0..1_000_000 {
             asm::nop();
         }
-
-        led.toggle();
+        
+        led.set_high();
 
         button.clear_interrupt_pending_bit();
     }

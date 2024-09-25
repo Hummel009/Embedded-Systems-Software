@@ -4,7 +4,7 @@
 
 use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicBool, Ordering};
-use cortex_m::asm;
+use cortex_m::asm::delay;
 use cortex_m_rt::entry;
 use panic_halt as _;
 use stm32f1xx_hal::gpio::*;
@@ -13,7 +13,7 @@ use stm32f1xx_hal::pac::interrupt;
 use stm32f1xx_hal::prelude::*;
 
 static mut BUTTON: MaybeUninit<gpioc::PC13<Input<Floating>>> = MaybeUninit::uninit();
-static FLAG: AtomicBool = AtomicBool::new(true);
+static FLAG: AtomicBool = AtomicBool::new(false);
 
 #[entry]
 fn main() -> ! {
@@ -22,7 +22,7 @@ fn main() -> ! {
     let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
 
-    rcc.cfgr.sysclk(10.MHz()).freeze(&mut flash.acr);
+    rcc.cfgr.sysclk(8.MHz()).freeze(&mut flash.acr);
 
     let mut gpioa = dp.GPIOA.split();
     let mut gpioc = dp.GPIOC.split();
@@ -45,7 +45,7 @@ fn main() -> ! {
         if FLAG.load(Ordering::SeqCst) {
             FLAG.store(false, Ordering::SeqCst);
 
-            delay(3);
+            delay(2 * 4_000_000);
 
             led.set_high();
         }
@@ -59,11 +59,5 @@ fn EXTI15_10() {
     if button.check_interrupt() {
         FLAG.store(true, Ordering::SeqCst);
         button.clear_interrupt_pending_bit();
-    }
-}
-
-fn delay(seconds: u32) {
-    for _ in 0..(seconds * 666666) {
-        asm::nop();
     }
 }

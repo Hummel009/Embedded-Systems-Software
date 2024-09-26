@@ -4,7 +4,6 @@
 
 use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicBool, Ordering};
-use cortex_m::asm::delay;
 use cortex_m_rt::entry;
 use panic_halt as _;
 use stm32f1xx_hal::gpio::*;
@@ -17,12 +16,13 @@ static FLAG: AtomicBool = AtomicBool::new(false);
 
 #[entry]
 fn main() -> ! {
+    let cp = cortex_m::Peripherals::take().unwrap();
     let mut dp = pac::Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
 
-    rcc.cfgr.sysclk(8.MHz()).freeze(&mut flash.acr);
+    let clocks = rcc.cfgr.sysclk(8.MHz()).freeze(&mut flash.acr);
 
     let mut gpioa = dp.GPIOA.split();
     let mut gpioc = dp.GPIOC.split();
@@ -41,11 +41,13 @@ fn main() -> ! {
         pac::NVIC::unmask(pac::Interrupt::EXTI15_10);
     }
 
+    let mut delay = cp.SYST.delay(&clocks);
+
     loop {
         if FLAG.load(Ordering::SeqCst) {
             FLAG.store(false, Ordering::SeqCst);
 
-            delay(2 * 4_000_000);
+            delay.delay(3.secs());
 
             led.set_high();
         }

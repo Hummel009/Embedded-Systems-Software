@@ -2,64 +2,45 @@
 #![no_main]
 #![no_std]
 
-use core::mem::MaybeUninit;
-use core::sync::atomic::{AtomicBool, Ordering};
 use cortex_m_rt::entry;
 use panic_halt as _;
 use stm32f1xx_hal::gpio::*;
 use stm32f1xx_hal::pac;
-use stm32f1xx_hal::pac::interrupt;
-use stm32f1xx_hal::prelude::*;
-
-static mut BUTTON: MaybeUninit<gpioc::PC13<Input<Floating>>> = MaybeUninit::uninit();
-static FLAG: AtomicBool = AtomicBool::new(false);
 
 #[entry]
 fn main() -> ! {
-    let cp = cortex_m::Peripherals::take().unwrap();
-    let mut dp = pac::Peripherals::take().unwrap();
-
-    let mut flash = dp.FLASH.constrain();
-    let rcc = dp.RCC.constrain();
-
-    let clocks = rcc.cfgr.sysclk(8.MHz()).freeze(&mut flash.acr);
+    let dp = pac::Peripherals::take().unwrap();
 
     let mut gpioa = dp.GPIOA.split();
-    let mut gpioc = dp.GPIOC.split();
-    let mut afio = dp.AFIO.constrain();
+    let mut gpiob = dp.GPIOB.split();
 
-    let mut led = gpioa.pa5.into_push_pull_output(&mut gpioa.crl);
+    let mut led1 = gpioa.pa5.into_push_pull_output(&mut gpioa.crl);
+    let mut led2 = gpioa.pa6.into_push_pull_output(&mut gpioa.crl);
+    let mut led3 = gpioa.pa7.into_push_pull_output(&mut gpioa.crl);
+    let mut led4 = gpiob.pb6.into_push_pull_output(&mut gpiob.crl);
 
-    let button = unsafe { &mut *BUTTON.as_mut_ptr() };
-    *button = gpioc.pc13.into_floating_input(&mut gpioc.crh);
+    let btn1 = gpioa.pa1.into_pull_up_input(&mut gpioa.crl);
+    let btn2 = gpioa.pa4.into_pull_up_input(&mut gpioa.crl);
+    let btn3 = gpiob.pb0.into_pull_up_input(&mut gpiob.crl);
 
-    button.make_interrupt_source(&mut afio);
-    button.trigger_on_edge(&mut dp.EXTI, Edge::Falling);
-    button.enable_interrupt(&mut dp.EXTI);
+    led1.set_low();
+    led2.set_low();
+    led3.set_low();
+    led4.set_low();
 
-    unsafe {
-        pac::NVIC::unmask(pac::Interrupt::EXTI15_10);
-    }
-
-    let mut delay = cp.SYST.delay(&clocks);
-
+    let mut stage = 1;
+    
     loop {
-        if FLAG.load(Ordering::SeqCst) {
-            FLAG.store(false, Ordering::SeqCst);
+        if stage == 1 {
+            if btn1.is_low() {
+                led4.set_high();
+            }
+        } else if stage == 2 {
 
-            delay.delay(3.secs());
+        } else if stage == 3 {
 
-            led.set_high();
+        } else if stage == 4 {
+
         }
-    }
-}
-
-#[interrupt]
-fn EXTI15_10() {
-    let button = unsafe { &mut *BUTTON.as_mut_ptr() };
-
-    if button.check_interrupt() {
-        FLAG.store(true, Ordering::SeqCst);
-        button.clear_interrupt_pending_bit();
     }
 }

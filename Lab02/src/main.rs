@@ -66,7 +66,7 @@ fn main() -> ! {
                 led3.set_high();
                 led4.set_low();
 
-                display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
+                display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level, [true, false, false, false]);
             }
 
             if btn1.is_low() {
@@ -78,9 +78,9 @@ fn main() -> ! {
             if !stage2_init {
                 stage2_init = true;
 
-                display_number(&mut ds, &mut sh_cp, &mut st_cp, current_level);
+                display_number(&mut ds, &mut sh_cp, &mut st_cp, current_level, [true, false, false, false]);
 
-                delay(1 * 4_000_000);
+                delay(2_000_000);
 
                 let sequence = levels[(current_level - 1) as usize];
 
@@ -98,7 +98,7 @@ fn main() -> ! {
                     error = true;
                 } else {
                     led1.set_low();
-                    delay(1 * 4_000_000);
+                    delay(2_000_000);
                     led1.set_high();
 
                     step += 1;
@@ -109,7 +109,7 @@ fn main() -> ! {
                     error = true;
                 } else {
                     led2.set_low();
-                    delay(1 * 4_000_000);
+                    delay(2_000_000);
                     led2.set_high();
 
                     step += 1;
@@ -120,7 +120,7 @@ fn main() -> ! {
                     error = true;
                 } else {
                     led3.set_low();
-                    delay(1 * 4_000_000);
+                    delay(2_000_000);
                     led3.set_high();
 
                     step += 1;
@@ -133,9 +133,12 @@ fn main() -> ! {
             }
         } else if stage == 4 {
             if error {
-                display_number(&mut ds, &mut sh_cp, &mut st_cp, 10);
-
-                delay(2 * 4_000_000);
+                display_number(&mut ds, &mut sh_cp, &mut st_cp, 10, [false, false, true, false]);
+                delay(2_000_000);
+                display_number(&mut ds, &mut sh_cp, &mut st_cp, 11, [false, true, false, false]);
+                delay(2_000_000);
+                display_number(&mut ds, &mut sh_cp, &mut st_cp, 11, [true, false, false, false]);
+                delay(2_000_000);
 
                 stage = 1;
 
@@ -150,16 +153,16 @@ fn main() -> ! {
                     best_level = current_level;
                 }
 
-                display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
+                display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level, [true, false, false, false]);
 
-                delay(2 * 4_000_000);
+                delay(2_000_000);
 
                 led1.set_low();
-                delay(1 * 4_000_000);
+                delay(2_000_000);
                 led2.set_low();
-                delay(1 * 4_000_000);
+                delay(2_000_000);
                 led3.set_low();
-                delay(2 * 4_000_000);
+                delay(2_000_000);
                 led1.set_high();
                 led2.set_high();
                 led3.set_high();
@@ -180,6 +183,7 @@ fn display_number(
     sh_cp: &mut Pin<'A', 8, Output>,
     st_cp: &mut Pin<'B', 5, Output>,
     number: u8,
+    placement: [bool; 4]
 ) {
     let segments = [
         // централ, верх-лево, низ-лево, низ, низ-право, верх-право, верх
@@ -193,7 +197,8 @@ fn display_number(
         [false, false, false, false, true, true, true], // 7
         [true, true, true, true, true, true, true],  // 8
         [true, true, false, true, true, true, true], // 9,
-        [true, true, true, true, false, false, true], // E
+        [true, true, true, true, false, false, true], // E,
+        [true, true, true, false, true, true, true], // R
     ];
 
     // НАЧАЛО
@@ -224,11 +229,8 @@ fn display_number(
     }
 
     // Какая позиция на табло горит
-
-    let states = [true, false, false, false];
-
-    for &state in &states {
-        if state {
+    for &place in &placement {
+        if place {
             ds.set_high();
         } else {
             ds.set_low();
@@ -264,7 +266,7 @@ fn show_sequence(
         }
 
         if num > 0 {
-            delay(1 * 4_000_000);
+            delay(2_000_000);
         }
 
         if num > 0 {

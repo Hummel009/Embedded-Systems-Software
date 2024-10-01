@@ -205,8 +205,6 @@ fn display_number(
         [true, true, true, true, false, false, true], // E
     ];
 
-    let selected = segments[number as usize];
-
     // НАЧАЛО
     st_cp.set_low();
     sh_cp.set_low();
@@ -220,7 +218,7 @@ fn display_number(
 
     // Какие палочки из числа горят
     for pos in 0..7 {
-        if selected[pos] {
+        if segments[number as usize][pos] {
             ds.set_low();
         } else {
             ds.set_high();
@@ -236,7 +234,7 @@ fn display_number(
         sh_cp.set_low();
     }
 
-    // Какое число на табло горит
+    // Какая позиция на табло горит
 
     let states = [true, false, false, false];
 

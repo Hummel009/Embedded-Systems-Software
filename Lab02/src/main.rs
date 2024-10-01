@@ -60,8 +60,11 @@ fn main() -> ! {
 
     let mut stage1_init = false;
     let mut stage2_init = false;
-    let mut stage3_init = false;
     let mut stage4_init = false;
+      
+    let mut input = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let mut step = 0;
+    let mut error = false;
 
     loop {
         if stage == 1 {
@@ -97,12 +100,70 @@ fn main() -> ! {
                 stage = 3;
             }
         } else if stage == 3 {
-            if !stage3_init {
-                stage3_init = true;
+            let sequence = levels[current_level as usize];
+            
+            delay(1 * 4_000_000);
+            
+            if btn1.is_low() {
+                input[step] = 1;
+
+                if sequence[step] != 1 {
+                    stage = 4;
+                    error = true;
+                } else {
+                    step += 1;
+                }
+            } else if btn2.is_low() {
+                input[step] = 2;
+                
+                if sequence[step] != 2 {
+                    stage = 4;
+                    error = true;
+                } else {
+                    step += 1;
+                }
+            } else if btn3.is_low() {
+                input[step] = 3;
+               
+                if sequence[step] != 3 {
+                    stage = 4;
+                    error = true;
+                } else {
+                    step += 1;
+                }
+            }
+
+            if sequence[step] == 0 {
+                stage = 4;
+                error = false;
             }
         } else if stage == 4 {
             if !stage4_init {
                 stage4_init = true;
+
+                if error {
+                    display_number(&mut ds, &mut sh_cp, &mut st_cp, 10);
+                } else {
+                    led1.set_low();
+                    led2.set_low();
+                    led3.set_low();
+
+                    delay(1 * 4_000_000);
+                    
+                    led1.set_high();
+                    led2.set_high();
+                    led3.set_high();
+
+                    current_level += 1;
+
+                    if best_level < current_level {
+                        best_level = current_level;
+                    }
+
+                    display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
+
+                    stage = 1;
+                }
             }
         }
     }
@@ -125,7 +186,8 @@ fn display_number(
         [true, true, true, true, true, false, true], // 6
         [false, false, false, false, true, true, true], // 7
         [true, true, true, true, true, true, true],  // 8
-        [true, true, false, true, true, true, true], // 9
+        [true, true, false, true, true, true, true], // 9,
+        [true, true, true, true, false, false, true], // E
     ];
 
     let selected = segments[number as usize];

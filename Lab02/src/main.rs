@@ -29,30 +29,61 @@ fn main() -> ! {
     let mut st_cp = gpiob.pb5.into_push_pull_output(&mut gpiob.crl);
 
     let mut stage = 1;
-    let mut is_displayed = false;
+    let mut best_level = 0;
+    let mut current_level = 1;
+
+    led1.set_high();
+    led2.set_high();
+    led3.set_high();
+    led4.set_high();
+
+    let levels = [
+        // Уровень 1
+        [1, 0, 0, 0, 0, 0, 0, 0, 0],
+        // Уровень 2
+        [2, 3, 0, 0, 0, 0, 0, 0, 0],
+        // Уровень 3
+        [1, 4, 2, 0, 0, 0, 0, 0, 0],
+        // Уровень 4
+        [3, 1, 2, 4, 0, 0, 0, 0, 0],
+        // Уровень 5
+        [2, 4, 1, 3, 2, 0, 0, 0, 0],
+        // Уровень 6
+        [1, 3, 4, 2, 1, 3, 0, 0, 0],
+        // Уровень 7
+        [4, 1, 2, 3, 4, 2, 1, 0, 0],
+        // Уровень 8
+        [2, 3, 1, 4, 2, 1, 4, 3, 0],
+        // Уровень 9
+        [1, 4, 2, 3, 1, 2, 3, 4, 2],
+    ];
 
     loop {
+        delay(500_000);
+
         if stage == 1 {
-            led1.set_low();
-            led2.set_low();
-            led3.set_low();
-            led4.set_high();
+            led1.set_high();
+            led2.set_high();
+            led3.set_high();
+            led4.set_low();
 
-            if !is_displayed {
-                is_displayed = true;
-
-                for number in 0..10 {
-                    delay(1 * 4_000_000);
-                    display_number(&mut ds, &mut sh_cp, &mut st_cp, number);
-                }
-            }
+            display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
 
             if btn1.is_low() {
                 stage = 2;
-
-                led4.set_low();
             }
         } else if stage == 2 {
+            led1.set_high();
+            led2.set_high();
+            led3.set_high();
+            led4.set_high();
+            
+            display_number(&mut ds, &mut sh_cp, &mut st_cp, current_level);
+
+            let sequence = levels[current_level as usize];
+
+            light_on(sequence, &mut led1, &mut led2, &mut led3, &mut led4);
+
         } else if stage == 3 {
         } else if stage == 4 {
         }
@@ -65,7 +96,7 @@ fn display_number(
     st_cp: &mut Pin<'B', 5, Output>,
     number: u8,
 ) {
-    let segments: [[bool; 7]; 10] = [
+    let segments = [
         // централ, верх-лево, низ-лево, низ,    низ-право, верх-право, верх
         [false,     true,      true,     true,   true,      true,       true],      // 0
         [false,     false,     false,    false,  true,      true,       false],     // 1
@@ -131,4 +162,15 @@ fn display_number(
     // КОНЕЦ
     st_cp.set_high();
     st_cp.set_low();
+}
+
+fn light_on(
+    sequence: [i32; 9],
+    led1: &mut Pin<'A', 5, Output>,
+    led2: &mut Pin<'A', 6, Output>,
+    led3: &mut Pin<'A', 7, Output>,
+    led4: &mut Pin<'B', 6, Output>
+
+){
+
 }

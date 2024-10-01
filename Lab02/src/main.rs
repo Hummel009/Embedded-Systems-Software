@@ -39,7 +39,7 @@ fn main() -> ! {
 
     let levels = [
         // Уровень 1
-        [1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [2, 0, 0, 0, 0, 0, 0, 0, 0],
         // Уровень 2
         [2, 3, 0, 0, 0, 0, 0, 0, 0],
         // Уровень 3
@@ -61,7 +61,7 @@ fn main() -> ! {
     let mut stage1_init = false;
     let mut stage2_init = false;
     let mut stage4_init = false;
-      
+
     let mut input = [0, 0, 0, 0, 0, 0, 0, 0, 0];
     let mut step = 0;
     let mut error = false;
@@ -75,36 +75,33 @@ fn main() -> ! {
                 led2.set_high();
                 led3.set_high();
                 led4.set_low();
-    
+
                 display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
             }
 
             if btn1.is_low() {
                 stage = 2;
+
+                led4.set_high();
             }
         } else if stage == 2 {
             if !stage2_init {
                 stage2_init = true;
-                
-                led1.set_high();
-                led2.set_high();
-                led3.set_high();
-                led4.set_high();
-    
+
                 display_number(&mut ds, &mut sh_cp, &mut st_cp, current_level);
-    
-                let sequence = levels[current_level as usize];
-    
+
+                let sequence = levels[(current_level - 1) as usize];
+
                 show_sequence(sequence, &mut led1, &mut led2, &mut led3, &mut led4);
 
                 stage = 3;
             }
         } else if stage == 3 {
             let sequence = levels[current_level as usize];
-            
-            delay(1 * 4_000_000);
-            
+
             if btn1.is_low() {
+                delay(1 * 500_000);
+
                 input[step] = 1;
 
                 if sequence[step] != 1 {
@@ -114,8 +111,10 @@ fn main() -> ! {
                     step += 1;
                 }
             } else if btn2.is_low() {
+                delay(1 * 500_000);
+
                 input[step] = 2;
-                
+
                 if sequence[step] != 2 {
                     stage = 4;
                     error = true;
@@ -123,8 +122,10 @@ fn main() -> ! {
                     step += 1;
                 }
             } else if btn3.is_low() {
+                delay(1 * 500_000);
+
                 input[step] = 3;
-               
+
                 if sequence[step] != 3 {
                     stage = 4;
                     error = true;
@@ -149,7 +150,7 @@ fn main() -> ! {
                     led3.set_low();
 
                     delay(1 * 4_000_000);
-                    
+
                     led1.set_high();
                     led2.set_high();
                     led3.set_high();
@@ -268,17 +269,15 @@ fn show_sequence(
         delay(1 * 4_000_000);
 
         if num > 0 {
-            if num > 0 {
-                let index = num;
-                if index == 1 {
-                    led1.set_high();
-                } else if index == 2 {
-                    led2.set_high();
-                } else if index == 3 {
-                    led3.set_high();
-                } else if index == 4 {
-                    led4.set_high();
-                }
+            let index = num;
+            if index == 1 {
+                led1.set_high();
+            } else if index == 2 {
+                led2.set_high();
+            } else if index == 3 {
+                led3.set_high();
+            } else if index == 4 {
+                led4.set_high();
             }
         }
     }

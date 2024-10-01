@@ -159,18 +159,16 @@ fn main() -> ! {
                     best_level = current_level;
                 }
 
-                delay(1 * 4_000_000);
-
                 display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
 
-                delay(1 * 4_000_000);
+                delay(2 * 4_000_000);
 
                 led1.set_low();
-                led2.set_low();
-                led3.set_low();
-
                 delay(1 * 4_000_000);
-
+                led2.set_low();
+                delay(1 * 4_000_000);
+                led3.set_low();
+                delay(2 * 4_000_000);
                 led1.set_high();
                 led2.set_high();
                 led3.set_high();

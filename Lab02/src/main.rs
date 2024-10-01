@@ -70,7 +70,7 @@ fn main() -> ! {
     let mut error = false;
 
     unsafe {
-        pac::NVIC::unmask(pac::Interrupt::EXTI15_10);
+        pac::NVIC::unmask(pac::Interrupt::EXTI1);
     }
 
     loop {
@@ -316,7 +316,7 @@ fn count_non_zeros(sequence: [i32; 9]) -> usize {
 }
 
 #[interrupt]
-fn EXTI15_10() {
+fn EXTI1() {
     let button = unsafe { &mut *BUTTON.as_mut_ptr() };
 
     if button.check_interrupt() {

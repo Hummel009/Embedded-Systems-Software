@@ -93,6 +93,8 @@ fn main() -> ! {
                 let sequence = levels[current_level as usize];
     
                 show_sequence(sequence, &mut led1, &mut led2, &mut led3, &mut led4);
+
+                stage = 3;
             }
         } else if stage == 3 {
             if !stage3_init {

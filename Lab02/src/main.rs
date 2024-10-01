@@ -61,7 +61,6 @@ fn main() -> ! {
 
     let mut stage1_init = false;
     let mut stage2_init = false;
-    let mut stage4_init = false;
 
     let mut step = 0;
     let mut error = false;
@@ -90,6 +89,8 @@ fn main() -> ! {
 
                 display_number(&mut ds, &mut sh_cp, &mut st_cp, current_level);
 
+                delay(1 * 4_000_000);
+
                 let sequence = levels[(current_level - 1) as usize];
 
                 show_sequence(sequence, &mut led1, &mut led2, &mut led3, &mut led4);
@@ -101,36 +102,36 @@ fn main() -> ! {
             let steps = count_non_zeros(sequence) - 1;
 
             if btn1.is_low() {
-                led1.set_low();
-                delay(1 * 4_000_000);
-                led1.set_high();
-
                 if sequence[step] != 1 {
                     stage = 4;
                     error = true;
                 } else {
+                    led1.set_low();
+                    delay(1 * 4_000_000);
+                    led1.set_high();
+
                     step += 1;
                 }
             } else if btn2.is_low() {
-                led2.set_low();
-                delay(1 * 4_000_000);
-                led2.set_high();
-
                 if sequence[step] != 2 {
                     stage = 4;
                     error = true;
                 } else {
+                    led2.set_low();
+                    delay(1 * 4_000_000);
+                    led2.set_high();
+
                     step += 1;
                 }
             } else if btn3.is_low() {
-                led3.set_low();
-                delay(1 * 4_000_000);
-                led3.set_high();
-
                 if sequence[step] != 3 {
                     stage = 4;
                     error = true;
                 } else {
+                    led3.set_low();
+                    delay(1 * 4_000_000);
+                    led3.set_high();
+
                     step += 1;
                 }
             }
@@ -140,49 +141,46 @@ fn main() -> ! {
                 error = false;
             }
         } else if stage == 4 {
-            if !stage4_init {
-                stage4_init = true;
+            if error {
+                display_number(&mut ds, &mut sh_cp, &mut st_cp, 10);
 
-                if error {
-                    display_number(&mut ds, &mut sh_cp, &mut st_cp, 10);
-                    
-                    delay(1 * 4_000_000);
-                    
-                    stage = 1;
-                    
-                    stage1_init = false;
-                    stage2_init = false;
-                    stage4_init = false;
-                    step = 0;
-                    error = false;
+                delay(2 * 4_000_000);
 
-                } else {
-                    current_level += 1;
+                stage = 1;
 
-                    if best_level < current_level {
-                        best_level = current_level;
-                    }
+                stage1_init = false;
+                stage2_init = false;
+                step = 0;
+                error = false;
+            } else {
+                current_level += 1;
 
-                    display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
-
-                    led1.set_low();
-                    led2.set_low();
-                    led3.set_low();
-
-                    delay(1 * 4_000_000);
-
-                    led1.set_high();
-                    led2.set_high();
-                    led3.set_high();
-
-                    stage = 2;
-                    
-                    stage1_init = false;
-                    stage2_init = false;
-                    stage4_init = false;
-                    step = 0;
-                    error = false;
+                if best_level < current_level {
+                    best_level = current_level;
                 }
+
+                delay(1 * 4_000_000);
+
+                display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
+
+                delay(1 * 4_000_000);
+
+                led1.set_low();
+                led2.set_low();
+                led3.set_low();
+
+                delay(1 * 4_000_000);
+
+                led1.set_high();
+                led2.set_high();
+                led3.set_high();
+
+                stage = 2;
+
+                stage1_init = false;
+                stage2_init = false;
+                step = 0;
+                error = false;
             }
         }
     }

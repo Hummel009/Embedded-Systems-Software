@@ -77,13 +77,12 @@ fn main() -> ! {
             led2.set_high();
             led3.set_high();
             led4.set_high();
-            
+
             display_number(&mut ds, &mut sh_cp, &mut st_cp, current_level);
 
             let sequence = levels[current_level as usize];
 
-            light_on(sequence, &mut led1, &mut led2, &mut led3, &mut led4);
-
+            show_sequence(sequence, &mut led1, &mut led2, &mut led3, &mut led4);
         } else if stage == 3 {
         } else if stage == 4 {
         }
@@ -98,16 +97,16 @@ fn display_number(
 ) {
     let segments = [
         // централ, верх-лево, низ-лево, низ,    низ-право, верх-право, верх
-        [false,     true,      true,     true,   true,      true,       true],      // 0
-        [false,     false,     false,    false,  true,      true,       false],     // 1
-        [true,      false,     true,     true,   false,     true,       true],      // 2
-        [true,      false,     false,    true,   true,      true,       true],      // 3
-        [true,      true,      false,    false,  true,      true,       false],     // 4
-        [true,      true,      false,    true,   true,      false,      true],      // 5
-        [true,      true,      true,     true,   true,      false,      true],      // 6
-        [false,     false,     false,    false,  true,      true,       true],      // 7
-        [true,      true,      true,     true,   true,      true,       true],      // 8
-        [true,      true,      false,    true,   true,      true,       true],      // 9
+        [false, true, true, true, true, true, true], // 0
+        [false, false, false, false, true, true, false], // 1
+        [true, false, true, true, false, true, true], // 2
+        [true, false, false, true, true, true, true], // 3
+        [true, true, false, false, true, true, false], // 4
+        [true, true, false, true, true, false, true], // 5
+        [true, true, true, true, true, false, true], // 6
+        [false, false, false, false, true, true, true], // 7
+        [true, true, true, true, true, true, true],  // 8
+        [true, true, false, true, true, true, true], // 9
     ];
 
     let selected = segments[number as usize];
@@ -129,10 +128,10 @@ fn display_number(
 
     // Какие палочки из числа горят
     for pos in 0..7 {
-        if selected[pos] { 
-            ds.set_low(); 
-        } else { 
-            ds.set_high(); 
+        if selected[pos] {
+            ds.set_low();
+        } else {
+            ds.set_high();
         }
         sh_cp.set_high();
         sh_cp.set_low();
@@ -164,13 +163,42 @@ fn display_number(
     st_cp.set_low();
 }
 
-fn light_on(
+fn show_sequence(
     sequence: [i32; 9],
     led1: &mut Pin<'A', 5, Output>,
     led2: &mut Pin<'A', 6, Output>,
     led3: &mut Pin<'A', 7, Output>,
-    led4: &mut Pin<'B', 6, Output>
+    led4: &mut Pin<'B', 6, Output>,
+) {
+    for &num in &sequence {
+        if num > 0 {
+            let index = num;
+            if index == 1 {
+                led1.set_low();
+            } else if index == 2 {
+                led2.set_low();
+            } else if index == 3 {
+                led3.set_low();
+            } else if index == 4 {
+                led4.set_low();
+            }
+        }
 
-){
+        delay(1_000_000);
 
+        if num > 0 {
+            if num > 0 {
+                let index = num;
+                if index == 1 {
+                    led1.set_high();
+                } else if index == 2 {
+                    led2.set_high();
+                } else if index == 3 {
+                    led3.set_high();
+                } else if index == 4 {
+                    led4.set_high();
+                }
+            }
+        }
+    }
 }

@@ -96,7 +96,7 @@ fn display_number(
     number: u8,
 ) {
     let segments = [
-        // централ, верх-лево, низ-лево, низ,    низ-право, верх-право, верх
+        // централ, верх-лево, низ-лево, низ, низ-право, верх-право, верх
         [false, true, true, true, true, true, true], // 0
         [false, false, false, false, true, true, false], // 1
         [true, false, true, true, false, true, true], // 2

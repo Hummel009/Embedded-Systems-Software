@@ -98,8 +98,8 @@ fn main() -> ! {
                 stage = 3;
             }
         } else if stage == 3 {
-            let sequence: [i32; 9] = levels[current_level as usize];
-            let steps = count_non_zeros(sequence) - 1;
+            let sequence: [i32; 9] = levels[(current_level - 1) as usize];
+            let steps = count_non_zeros(sequence);
 
             if btn1.is_low() {
                 if sequence[step] != 1 {

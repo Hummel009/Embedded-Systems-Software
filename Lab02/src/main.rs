@@ -58,33 +58,50 @@ fn main() -> ! {
         [1, 4, 2, 3, 1, 2, 3, 4, 2],
     ];
 
+    let mut stage1_init = false;
+    let mut stage2_init = false;
+    let mut stage3_init = false;
+    let mut stage4_init = false;
+
     loop {
         delay(500_000);
 
         if stage == 1 {
-            led1.set_high();
-            led2.set_high();
-            led3.set_high();
-            led4.set_low();
-
-            display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
+            if !stage1_init {
+                stage1_init = true;
+                led1.set_high();
+                led2.set_high();
+                led3.set_high();
+                led4.set_low();
+    
+                display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
+            }
 
             if btn1.is_low() {
                 stage = 2;
             }
         } else if stage == 2 {
-            led1.set_high();
-            led2.set_high();
-            led3.set_high();
-            led4.set_high();
-
-            display_number(&mut ds, &mut sh_cp, &mut st_cp, current_level);
-
-            let sequence = levels[current_level as usize];
-
-            show_sequence(sequence, &mut led1, &mut led2, &mut led3, &mut led4);
+            if !stage2_init {
+                stage2_init = true;
+                led1.set_high();
+                led2.set_high();
+                led3.set_high();
+                led4.set_high();
+    
+                display_number(&mut ds, &mut sh_cp, &mut st_cp, current_level);
+    
+                let sequence = levels[current_level as usize];
+    
+                show_sequence(sequence, &mut led1, &mut led2, &mut led3, &mut led4);
+            }
         } else if stage == 3 {
+            if !stage3_init {
+                stage3_init = true;
+            }
         } else if stage == 4 {
+            if !stage4_init {
+                stage4_init = true;
+            }
         }
     }
 }

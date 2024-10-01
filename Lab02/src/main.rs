@@ -2,27 +2,40 @@
 #![no_main]
 #![no_std]
 
+use core::mem::MaybeUninit;
+use core::sync::atomic::{AtomicBool, Ordering};
 use cortex_m::asm::delay;
 use cortex_m_rt::entry;
 use panic_halt as _;
 use stm32f1xx_hal::gpio::*;
 use stm32f1xx_hal::pac;
+use stm32f1xx_hal::pac::interrupt;
+use stm32f1xx_hal::prelude::*;
+
+static mut BUTTON: MaybeUninit<gpioa::PA1<Input<PullUp>>> = MaybeUninit::uninit();
+static FLAG: AtomicBool = AtomicBool::new(false);
 
 #[entry]
 fn main() -> ! {
-    let dp = pac::Peripherals::take().unwrap();
+    let mut dp = pac::Peripherals::take().unwrap();
 
     let mut gpioa = dp.GPIOA.split();
     let mut gpiob = dp.GPIOB.split();
+    let mut afio = dp.AFIO.constrain();
 
     let mut led1 = gpioa.pa5.into_push_pull_output(&mut gpioa.crl);
     let mut led2 = gpioa.pa6.into_push_pull_output(&mut gpioa.crl);
     let mut led3 = gpioa.pa7.into_push_pull_output(&mut gpioa.crl);
     let mut led4 = gpiob.pb6.into_push_pull_output(&mut gpiob.crl);
 
-    let btn1 = gpioa.pa1.into_pull_up_input(&mut gpioa.crl);
+    let btn1 = unsafe { &mut *BUTTON.as_mut_ptr() };
+    *btn1 = gpioa.pa1.into_pull_up_input(&mut gpioa.crl);
     let btn2 = gpioa.pa4.into_pull_up_input(&mut gpioa.crl);
     let btn3 = gpiob.pb0.into_pull_up_input(&mut gpiob.crl);
+
+    btn1.make_interrupt_source(&mut afio);
+    btn1.trigger_on_edge(&mut dp.EXTI, Edge::Falling);
+    btn1.enable_interrupt(&mut dp.EXTI);
 
     let mut ds = gpioa.pa9.into_push_pull_output(&mut gpioa.crh);
     let mut sh_cp = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
@@ -56,6 +69,10 @@ fn main() -> ! {
     let mut step = 0;
     let mut error = false;
 
+    unsafe {
+        pac::NVIC::unmask(pac::Interrupt::EXTI15_10);
+    }
+
     loop {
         if stage == 1 {
             if !stage1_init {
@@ -69,7 +86,9 @@ fn main() -> ! {
                 display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level, [true, false, false, false]);
             }
 
-            if btn1.is_low() {
+            if FLAG.load(Ordering::SeqCst) {
+                FLAG.store(false, Ordering::SeqCst);
+
                 stage = 2;
 
                 led4.set_high();
@@ -294,4 +313,14 @@ fn count_non_zeros(sequence: [i32; 9]) -> usize {
         }
     }
     count
+}
+
+#[interrupt]
+fn EXTI15_10() {
+    let button = unsafe { &mut *BUTTON.as_mut_ptr() };
+
+    if button.check_interrupt() {
+        FLAG.store(true, Ordering::SeqCst);
+        button.clear_interrupt_pending_bit();
+    }
 }

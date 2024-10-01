@@ -154,11 +154,12 @@ fn main() -> ! {
             if error {
                 current_level = 1;
 
-                display_number(&mut ds, &mut sh_cp, &mut st_cp, 10, [false, false, true, false]);
-                delay(2_000_000);
-                display_number(&mut ds, &mut sh_cp, &mut st_cp, 11, [false, true, false, false]);
-                delay(2_000_000);
-                display_number(&mut ds, &mut sh_cp, &mut st_cp, 11, [true, false, false, false]);
+                for _ in 0..100000 {
+                    display_number(&mut ds, &mut sh_cp, &mut st_cp, 10, [false, false, true, false]);
+                    display_number(&mut ds, &mut sh_cp, &mut st_cp, 11, [false, true, false, false]);
+                    display_number(&mut ds, &mut sh_cp, &mut st_cp, 11, [true, false, false, false]);
+                }
+                
                 delay(2_000_000);
 
                 stage = 1;

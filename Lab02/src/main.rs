@@ -133,6 +133,8 @@ fn main() -> ! {
             }
         } else if stage == 4 {
             if error {
+                current_level = 1;
+
                 display_number(&mut ds, &mut sh_cp, &mut st_cp, 10, [false, false, true, false]);
                 delay(2_000_000);
                 display_number(&mut ds, &mut sh_cp, &mut st_cp, 11, [false, true, false, false]);

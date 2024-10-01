@@ -209,14 +209,12 @@ fn display_number(
     st_cp.set_low();
     sh_cp.set_low();
 
-    // Зачистка
-    for _ in 0..2 {
-        ds.set_high();
-        sh_cp.set_high();
-        sh_cp.set_low();
-    }
+    // Точка для дробей
+    ds.set_high();
+    sh_cp.set_high();
+    sh_cp.set_low();
 
-    // Какие палочки из числа горят
+    // Палочки, из которых состоит число
     for pos in 0..7 {
         if segments[number as usize][pos] {
             ds.set_low();
@@ -227,7 +225,7 @@ fn display_number(
         sh_cp.set_low();
     }
 
-    // Зачистка
+    // Протолкнуть данные выше во второй регистр
     for _ in 0..4 {
         ds.set_high();
         sh_cp.set_high();

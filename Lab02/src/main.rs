@@ -28,10 +28,6 @@ fn main() -> ! {
     let mut sh_cp = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
     let mut st_cp = gpiob.pb5.into_push_pull_output(&mut gpiob.crl);
 
-    let mut stage = 1;
-    let mut best_level = 0;
-    let mut current_level = 1;
-
     led1.set_high();
     led2.set_high();
     led3.set_high();
@@ -58,11 +54,15 @@ fn main() -> ! {
         [1, 3, 2, 3, 1, 2, 3, 1, 2],
     ];
 
+    let mut best_level = 0;
+    let mut current_level = 1;
+
+    let mut stage = 1;
+
     let mut stage1_init = false;
     let mut stage2_init = false;
     let mut stage4_init = false;
 
-    let mut input = [0, 0, 0, 0, 0, 0, 0, 0, 0];
     let mut step = 0;
     let mut error = false;
 
@@ -97,12 +97,13 @@ fn main() -> ! {
                 stage = 3;
             }
         } else if stage == 3 {
-            let sequence = levels[current_level as usize];
+            let sequence: [i32; 9] = levels[current_level as usize];
+            let steps = count_non_zeros(sequence) - 1;
 
             if btn1.is_low() {
-                delay(1 * 500_000);
-
-                input[step] = 1;
+                led1.set_low();
+                delay(1 * 4_000_000);
+                led1.set_high();
 
                 if sequence[step] != 1 {
                     stage = 4;
@@ -111,9 +112,9 @@ fn main() -> ! {
                     step += 1;
                 }
             } else if btn2.is_low() {
-                delay(1 * 500_000);
-
-                input[step] = 2;
+                led2.set_low();
+                delay(1 * 4_000_000);
+                led2.set_high();
 
                 if sequence[step] != 2 {
                     stage = 4;
@@ -122,9 +123,9 @@ fn main() -> ! {
                     step += 1;
                 }
             } else if btn3.is_low() {
-                delay(1 * 500_000);
-
-                input[step] = 3;
+                led3.set_low();
+                delay(1 * 4_000_000);
+                led3.set_high();
 
                 if sequence[step] != 3 {
                     stage = 4;
@@ -134,7 +135,7 @@ fn main() -> ! {
                 }
             }
 
-            if sequence[step] == 0 {
+            if step >= steps {
                 stage = 4;
                 error = false;
             }
@@ -144,7 +145,26 @@ fn main() -> ! {
 
                 if error {
                     display_number(&mut ds, &mut sh_cp, &mut st_cp, 10);
+                    
+                    delay(1 * 4_000_000);
+                    
+                    stage = 1;
+                    
+                    stage1_init = false;
+                    stage2_init = false;
+                    stage4_init = false;
+                    step = 0;
+                    error = false;
+
                 } else {
+                    current_level += 1;
+
+                    if best_level < current_level {
+                        best_level = current_level;
+                    }
+
+                    display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
+
                     led1.set_low();
                     led2.set_low();
                     led3.set_low();
@@ -155,15 +175,13 @@ fn main() -> ! {
                     led2.set_high();
                     led3.set_high();
 
-                    current_level += 1;
-
-                    if best_level < current_level {
-                        best_level = current_level;
-                    }
-
-                    display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level);
-
-                    stage = 1;
+                    stage = 2;
+                    
+                    stage1_init = false;
+                    stage2_init = false;
+                    stage4_init = false;
+                    step = 0;
+                    error = false;
                 }
             }
         }
@@ -192,10 +210,6 @@ fn display_number(
     ];
 
     let selected = segments[number as usize];
-
-    if number > 9 {
-        return;
-    }
 
     // НАЧАЛО
     st_cp.set_low();
@@ -266,7 +280,9 @@ fn show_sequence(
             }
         }
 
-        delay(1 * 4_000_000);
+        if num > 0 {
+            delay(1 * 4_000_000);
+        }
 
         if num > 0 {
             let index = num;
@@ -281,4 +297,14 @@ fn show_sequence(
             }
         }
     }
+}
+
+fn count_non_zeros(sequence: [i32; 9]) -> usize {
+    let mut count = 0;
+    for &num in &sequence {
+        if num != 0 {
+            count += 1;
+        }
+    }
+    count
 }

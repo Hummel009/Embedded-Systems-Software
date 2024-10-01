@@ -219,7 +219,7 @@ fn display_number(
         [true, true, true, true, true, true, true],  // 8
         [true, true, false, true, true, true, true], // 9,
         [true, true, true, true, false, false, true], // E,
-        [true, true, true, false, true, true, true], // R
+        [true, false, true, false, false, false, false], // r
     ];
 
     // НАЧАЛО

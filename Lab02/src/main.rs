@@ -64,11 +64,10 @@ fn main() -> ! {
     let mut stage4_init = false;
 
     loop {
-        delay(500_000);
-
         if stage == 1 {
             if !stage1_init {
                 stage1_init = true;
+
                 led1.set_high();
                 led2.set_high();
                 led3.set_high();
@@ -83,6 +82,7 @@ fn main() -> ! {
         } else if stage == 2 {
             if !stage2_init {
                 stage2_init = true;
+                
                 led1.set_high();
                 led2.set_high();
                 led3.set_high();
@@ -201,7 +201,7 @@ fn show_sequence(
             }
         }
 
-        delay(1_000_000);
+        delay(1 * 4_000_000);
 
         if num > 0 {
             if num > 0 {

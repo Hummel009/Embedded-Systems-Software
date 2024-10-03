@@ -285,14 +285,9 @@ fn show_sequence(
             } else if index == 4 {
                 led4.set_low();
             }
-        }
 
-        if num > 0 {
             delay(2_000_000);
-        }
-
-        if num > 0 {
-            let index = num;
+            
             if index == 1 {
                 led1.set_high();
             } else if index == 2 {

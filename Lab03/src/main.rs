@@ -40,8 +40,11 @@ fn main() -> ! {
 
     let mut tx = serial.tx.with_dma(channels.7);
 
+    let mut i = 0;
     loop {
-        let value = 0.2 as f32;
+        i += 1;
+
+        let value = generate_sine_wave(10, 5, i, 44100, 0);
 
         let bits: u32 = value.to_bits();
 
@@ -56,4 +59,8 @@ fn main() -> ! {
 
         delay(2_000_000);
     }
+}
+
+fn generate_sine_wave(a: i32, f: i32, i: i32, n: i32, phi0: i32) -> f32 {
+    return a as f32 * libm::sin(2.0 * 3.14 * f as f64 * i as f64 / n as f64 + phi0 as f64) as f32;
 }

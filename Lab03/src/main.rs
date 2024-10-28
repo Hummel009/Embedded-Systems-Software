@@ -1,20 +1,14 @@
-//! Serial interface DMA TX transfer test
-
 #![deny(unsafe_code)]
 #![allow(clippy::empty_loop)]
 #![no_main]
 #![no_std]
 
-use panic_halt as _;
-
-use cortex_m::asm;
-
+use cortex_m::asm::delay;
 use cortex_m_rt::entry;
-use stm32f1xx_hal::{
-    pac,
-    prelude::*,
-    serial::{Config, Serial},
-};
+use panic_halt as _;
+use stm32f1xx_hal::pac;
+use stm32f1xx_hal::prelude::*;
+use stm32f1xx_hal::serial::{Config, Serial};
 
 #[entry]
 fn main() -> ! {
@@ -41,17 +35,19 @@ fn main() -> ! {
         &clocks,
     );
 
-    let tx = serial.tx.with_dma(channels.7);
+    let mut tx = serial.tx.with_dma(channels.7);
 
-    let (_, tx) = tx.write(b"The quick brown fox").wait();
+    loop {
+        let (_, loop_tx) = tx.write(b"0").wait();
+        tx = loop_tx;
+        delay(2_000_000);
 
-    asm::bkpt();
+        let (_, loop_tx) = tx.write(b"1").wait();
+        tx = loop_tx;
+        delay(2_000_000);
 
-    let (_, tx) = tx.write(b" jumps").wait();
-
-    asm::bkpt();
-
-    tx.write(b" over the lazy dog.").wait();
-
-    loop {}
+        let (_, loop_tx) = tx.write(b"0").wait();
+        tx = loop_tx;
+        delay(2_000_000);
+    }
 }

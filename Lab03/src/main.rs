@@ -1,4 +1,3 @@
-#![deny(unsafe_code)]
 #![allow(clippy::empty_loop)]
 #![no_main]
 #![no_std]
@@ -9,6 +8,10 @@ use panic_halt as _;
 use stm32f1xx_hal::pac;
 use stm32f1xx_hal::prelude::*;
 use stm32f1xx_hal::serial::{Config, Serial};
+
+extern crate libm;
+
+static mut VALUE_BITS: [u8; 32] = [48; 32];
 
 #[entry]
 fn main() -> ! {
@@ -38,16 +41,19 @@ fn main() -> ! {
     let mut tx = serial.tx.with_dma(channels.7);
 
     loop {
-        let (_, loop_tx) = tx.write(b"0").wait();
-        tx = loop_tx;
-        delay(2_000_000);
+        let value = 0.2 as f32;
 
-        let (_, loop_tx) = tx.write(b"1").wait();
-        tx = loop_tx;
-        delay(2_000_000);
+        let bits: u32 = value.to_bits();
 
-        let (_, loop_tx) = tx.write(b"0").wait();
-        tx = loop_tx;
+        unsafe {
+            for i in 0..32 {
+                VALUE_BITS[i] = if (bits >> (31 - i)) & 1 == 1 { 49 } else { 48 };
+            }
+
+            let (_, loop_tx) = tx.write(&VALUE_BITS).wait();
+            tx = loop_tx;
+        }
+
         delay(2_000_000);
     }
 }

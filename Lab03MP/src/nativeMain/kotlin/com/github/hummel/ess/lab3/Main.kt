@@ -3,11 +3,23 @@ package com.github.hummel.ess.lab3
 import kotlinx.cinterop.*
 import platform.windows.*
 import kotlin.math.max
+import kotlin.random.Random
+
+const val rgbBlack: COLORREF = 0x00000000u
+const val rgbWhite: COLORREF = 0x00FFFFFFu
+
+lateinit var points: List<Point>
+
+data class Point(val x: Int, val y: Int)
 
 fun main() {
 	memScoped {
 		val className = "STM32 Connector"
 		val windowTitle = "WinAPI"
+
+		points = List(100) { index ->
+			Point(index * (1200 / 100), Random.nextInt(0, 670))
+		}
 
 		val windowClass = alloc<WNDCLASSW>()
 		windowClass.style = 0u
@@ -56,17 +68,48 @@ fun main() {
 }
 
 private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
-	when (msg.toInt()) {
-		WM_CREATE -> {
+	memScoped {
+		when (msg.toInt()) {
+			WM_CREATE -> {
+				// Здесь можно выполнить дополнительные действия при создании окна
+			}
 
+			WM_PAINT -> {
+				clearAndUpdate(window)
+
+				val paintStructure = alloc<PAINTSTRUCT>()
+				val deviceContext = BeginPaint(window, paintStructure.ptr)
+
+				// Рисуем линии между случайными точками
+				for (i in points.indices) {
+					if (i < points.size - 1) {
+						MoveToEx(deviceContext, points[i].x, points[i].y, null)
+						LineTo(deviceContext, points[i + 1].x, points[i + 1].y)
+					}
+				}
+
+				EndPaint(window, paintStructure.ptr)
+			}
+
+			WM_CLOSE -> DestroyWindow(window)
+			WM_DESTROY -> PostQuitMessage(0)
 		}
-
-		WM_COMMAND -> {
-
-		}
-
-		WM_CLOSE -> DestroyWindow(window)
-		WM_DESTROY -> PostQuitMessage(0)
 	}
 	return DefWindowProcW(window, msg, wParam, lParam)
+}
+
+private fun clearAndUpdate(window: HWND?) {
+	memScoped {
+		val deviceContext = GetDC(window)
+		val square = alloc<RECT>()
+		val brush = CreateSolidBrush(rgbWhite)
+
+		GetClientRect(window, square.ptr)
+
+		FillRect(deviceContext, square.ptr, brush)
+
+		InvalidateRect(window, null, TRUE)
+
+		ReleaseDC(window, deviceContext)
+	}
 }

@@ -21,7 +21,7 @@ fun main() {
 		val windowTitle = "WinAPI"
 
 		points = MutableList(POINT_COUNT) { index ->
-			Point(index * (1200 / POINT_COUNT), calculateY(index))
+			Point(calculateX(index), calculateY(index))
 		}
 
 		val windowClass = alloc<WNDCLASSW>()
@@ -111,9 +111,11 @@ private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): L
 private fun updatePoints() {
 	timeOffset += FREQUENCY
 	points = MutableList(POINT_COUNT) { index ->
-		Point(index * (1200 / POINT_COUNT), calculateY(index))
+		Point(calculateX(index), calculateY(index))
 	}
 }
+
+private fun calculateX(index: Int): Int = index * (1200 / POINT_COUNT)
 
 private fun calculateY(index: Int): Int =
 	((20 * AMPLITUDE * sin((index * FREQUENCY) + timeOffset)).toInt() + (670 / 2)).coerceIn(0..670)

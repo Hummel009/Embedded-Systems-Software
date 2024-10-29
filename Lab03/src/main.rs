@@ -170,7 +170,7 @@ fn main() -> ! {
 
         let value = generate_sine_wave(a, f, i, 44100, phi);
 
-        let bits: u32 = value.to_bits();
+        let bits = value.to_bits();
 
         unsafe {
             for i in 0..32 {
@@ -185,16 +185,6 @@ fn main() -> ! {
 
 fn generate_sine_wave(a: i32, f: i32, i: i32, n: i32, phi0: i32) -> f32 {
     return a as f32 * libm::sinf(2.0 * 3.14 * f as f32 * i as f32 / n as f32 + phi0 as f32);
-}
-
-#[interrupt]
-fn EXTI1() {
-    let btn_mode_select = unsafe { &mut *BTN_MODE_SELECT.as_mut_ptr() };
-
-    if btn_mode_select.check_interrupt() {
-        FLAG.store(true, Ordering::SeqCst);
-        btn_mode_select.clear_interrupt_pending_bit();
-    }
 }
 
 fn display_number(
@@ -261,4 +251,14 @@ fn display_number(
     // КОНЕЦ
     st_cp.set_high();
     st_cp.set_low();
+}
+
+#[interrupt]
+fn EXTI1() {
+    let btn_mode_select = unsafe { &mut *BTN_MODE_SELECT.as_mut_ptr() };
+
+    if btn_mode_select.check_interrupt() {
+        FLAG.store(true, Ordering::SeqCst);
+        btn_mode_select.clear_interrupt_pending_bit();
+    }
 }

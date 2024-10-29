@@ -6,8 +6,9 @@ import kotlin.math.max
 import kotlin.random.Random
 
 const val rgbWhite: COLORREF = 0x00FFFFFFu
+const val POINT_COUNT: Int = 100
 
-lateinit var points: List<Point>
+lateinit var points: MutableList<Point>
 
 data class Point(val x: Int, val y: Int)
 
@@ -16,8 +17,8 @@ fun main() {
 		val className = "STM32 Connector"
 		val windowTitle = "WinAPI"
 
-		points = List(100) { index ->
-			Point(index * (1200 / 100), Random.nextInt(0, 670))
+		points = MutableList(POINT_COUNT) { index ->
+			Point(index * (1200 / POINT_COUNT), Random.nextInt(0, 670))
 		}
 
 		val windowClass = alloc<WNDCLASSW>()
@@ -58,6 +59,8 @@ fun main() {
 			null
 		)
 
+		SetTimer(null, 1u, 100u, null)
+
 		val msg = alloc<MSG>()
 		while (GetMessageW(msg.ptr, null, 0u, 0u) != 0) {
 			TranslateMessage(msg.ptr)
@@ -68,11 +71,16 @@ fun main() {
 
 private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
 	memScoped {
-		when (msg.toInt()) {
-			WM_PAINT -> {
-				clearAndUpdate(window)
+		val paintStructure = alloc<PAINTSTRUCT>()
 
-				val paintStructure = alloc<PAINTSTRUCT>()
+		when (msg.toInt()) {
+			WM_KEYDOWN -> {
+				updatePoints()
+
+				clearAndUpdate(window)
+			}
+
+			WM_PAINT -> {
 				val deviceContext = BeginPaint(window, paintStructure.ptr)
 
 				for (i in points.indices) {
@@ -97,13 +105,14 @@ private fun clearAndUpdate(window: HWND?) {
 		val deviceContext = GetDC(window)
 		val square = alloc<RECT>()
 		val brush = CreateSolidBrush(rgbWhite)
-
 		GetClientRect(window, square.ptr)
-
 		FillRect(deviceContext, square.ptr, brush)
-
 		InvalidateRect(window, null, TRUE)
-
 		ReleaseDC(window, deviceContext)
 	}
+}
+
+private fun updatePoints() {
+	points.removeAt(0)
+	points.add(Point(points.last().x + (1200 / POINT_COUNT), Random.nextInt(0, 670)))
 }

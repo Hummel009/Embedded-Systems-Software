@@ -5,7 +5,6 @@ import platform.windows.*
 import kotlin.math.max
 import kotlin.random.Random
 
-const val rgbBlack: COLORREF = 0x00000000u
 const val rgbWhite: COLORREF = 0x00FFFFFFu
 
 lateinit var points: List<Point>
@@ -70,17 +69,12 @@ fun main() {
 private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
 	memScoped {
 		when (msg.toInt()) {
-			WM_CREATE -> {
-				// Здесь можно выполнить дополнительные действия при создании окна
-			}
-
 			WM_PAINT -> {
 				clearAndUpdate(window)
 
 				val paintStructure = alloc<PAINTSTRUCT>()
 				val deviceContext = BeginPaint(window, paintStructure.ptr)
 
-				// Рисуем линии между случайными точками
 				for (i in points.indices) {
 					if (i < points.size - 1) {
 						MoveToEx(deviceContext, points[i].x, points[i].y, null)

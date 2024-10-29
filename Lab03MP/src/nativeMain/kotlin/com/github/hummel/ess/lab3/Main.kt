@@ -77,11 +77,16 @@ private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): L
 			WM_KEYDOWN -> {
 				updatePoints()
 
-				clearAndUpdate(window)
+				InvalidateRect(window, null, TRUE)
 			}
 
 			WM_PAINT -> {
 				val deviceContext = BeginPaint(window, paintStructure.ptr)
+
+				val brush = CreateSolidBrush(rgbWhite)
+				val square = alloc<RECT>()
+				GetClientRect(window, square.ptr)
+				FillRect(deviceContext, square.ptr, brush)
 
 				for (i in points.indices) {
 					if (i < points.size - 1) {
@@ -90,6 +95,7 @@ private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): L
 					}
 				}
 
+				DeleteObject(brush)
 				EndPaint(window, paintStructure.ptr)
 			}
 
@@ -100,19 +106,8 @@ private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): L
 	return DefWindowProcW(window, msg, wParam, lParam)
 }
 
-private fun clearAndUpdate(window: HWND?) {
-	memScoped {
-		val deviceContext = GetDC(window)
-		val square = alloc<RECT>()
-		val brush = CreateSolidBrush(rgbWhite)
-		GetClientRect(window, square.ptr)
-		FillRect(deviceContext, square.ptr, brush)
-		InvalidateRect(window, null, TRUE)
-		ReleaseDC(window, deviceContext)
-	}
-}
-
 private fun updatePoints() {
-	points.removeAt(0)
-	points.add(Point(points.last().x + (1200 / POINT_COUNT), Random.nextInt(0, 670)))
+	points = MutableList(POINT_COUNT) { index ->
+		Point(index * (1200 / POINT_COUNT), Random.nextInt(0, 670))
+	}
 }

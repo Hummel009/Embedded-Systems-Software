@@ -26,8 +26,8 @@ fun main() {
 		val screenWidth = GetSystemMetrics(SM_CXSCREEN)
 		val screenHeight = GetSystemMetrics(SM_CYSCREEN)
 
-		val windowWidth = 1600
-		val windowHeight = 900
+		val windowWidth = 1200
+		val windowHeight = 670
 
 		val windowX = max(0, (screenWidth - windowWidth) / 2)
 		val windowY = max(0, (screenHeight - windowHeight) / 2)

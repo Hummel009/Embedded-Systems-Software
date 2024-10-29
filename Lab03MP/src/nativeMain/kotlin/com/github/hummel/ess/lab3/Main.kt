@@ -12,6 +12,7 @@ const val FREQUENCY: Double = 1.0
 
 lateinit var points: MutableList<Point>
 var timeOffset: Double = 0.0
+var isRunning = true
 
 data class Point(val x: Int, val y: Int)
 
@@ -20,9 +21,7 @@ fun main() {
 		val className = "STM32 Connector"
 		val windowTitle = "WinAPI"
 
-		points = MutableList(POINT_COUNT) { index ->
-			Point(calculateX(index), calculateY(index))
-		}
+		points = MutableList(POINT_COUNT) { Point(0, 0) }
 
 		val windowClass = alloc<WNDCLASSW>()
 		windowClass.style = 0u
@@ -62,7 +61,7 @@ fun main() {
 			null
 		)
 
-		SetTimer(null, 1u, 100u, null)
+		CreateThread(null, 0u, staticCFunction(::threadOperate), null, 0u, null)
 
 		val msg = alloc<MSG>()
 		while (GetMessageW(msg.ptr, null, 0u, 0u) != 0) {
@@ -74,15 +73,9 @@ fun main() {
 
 private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
 	memScoped {
-		val paintStructure = alloc<PAINTSTRUCT>()
-
 		when (msg.toInt()) {
-			WM_KEYDOWN -> {
-				updatePoints()
-				InvalidateRect(window, null, TRUE)
-			}
-
 			WM_PAINT -> {
+				val paintStructure = alloc<PAINTSTRUCT>()
 				val deviceContext = BeginPaint(window, paintStructure.ptr)
 
 				val brush = CreateSolidBrush(rgbWhite)
@@ -101,18 +94,30 @@ private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): L
 				EndPaint(window, paintStructure.ptr)
 			}
 
-			WM_CLOSE -> DestroyWindow(window)
+			WM_CLOSE -> {
+				isRunning = false // Остановить генерацию при закрытии окна
+				DestroyWindow(window)
+			}
+
 			WM_DESTROY -> PostQuitMessage(0)
 		}
 	}
 	return DefWindowProcW(window, msg, wParam, lParam)
 }
 
-private fun updatePoints() {
-	timeOffset += FREQUENCY
-	points = MutableList(POINT_COUNT) { index ->
-		Point(calculateX(index), calculateY(index))
+@Suppress("UNUSED_PARAMETER")
+fun threadOperate(lpParameter: LPVOID?): DWORD {
+	while (isRunning) {
+		timeOffset += FREQUENCY
+		points = MutableList(POINT_COUNT) { index ->
+			Point(calculateX(index), calculateY(index))
+		}
+
+		InvalidateRect(GetForegroundWindow(), null, TRUE)
+
+		Sleep(100u)
 	}
+	return 0u
 }
 
 private fun calculateX(index: Int): Int = index * (1200 / POINT_COUNT)

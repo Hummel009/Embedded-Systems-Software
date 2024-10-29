@@ -95,7 +95,7 @@ private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): L
 			}
 
 			WM_CLOSE -> {
-				isRunning = false // Остановить генерацию при закрытии окна
+				isRunning = false
 				DestroyWindow(window)
 			}
 
@@ -110,17 +110,15 @@ fun threadOperate(lpParameter: LPVOID?): DWORD {
 	while (isRunning) {
 		timeOffset += FREQUENCY
 		points = MutableList(POINT_COUNT) { index ->
-			Point(calculateX(index), calculateY(index))
+			Point(
+				index * (1200 / POINT_COUNT),
+				(20 * AMPLITUDE * sin((index * FREQUENCY) + timeOffset)).toInt() + 670 / 2
+			)
 		}
 
 		InvalidateRect(GetForegroundWindow(), null, TRUE)
 
-		Sleep(100u)
+		Sleep(1u)
 	}
 	return 0u
 }
-
-private fun calculateX(index: Int): Int = index * (1200 / POINT_COUNT)
-
-private fun calculateY(index: Int): Int =
-	((20 * AMPLITUDE * sin((index * FREQUENCY) + timeOffset)).toInt() + (670 / 2)).coerceIn(0..670)

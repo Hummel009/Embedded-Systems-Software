@@ -3,12 +3,15 @@ package com.github.hummel.ess.lab3
 import kotlinx.cinterop.*
 import platform.windows.*
 import kotlin.math.max
-import kotlin.random.Random
+import kotlin.math.sin
 
 const val rgbWhite: COLORREF = 0x00FFFFFFu
 const val POINT_COUNT: Int = 100
+const val AMPLITUDE: Double = 100.0
+const val FREQUENCY: Double = 1.0
 
 lateinit var points: MutableList<Point>
+var timeOffset: Double = 0.0 // Смещение по времени
 
 data class Point(val x: Int, val y: Int)
 
@@ -18,7 +21,7 @@ fun main() {
 		val windowTitle = "WinAPI"
 
 		points = MutableList(POINT_COUNT) { index ->
-			Point(index * (1200 / POINT_COUNT), Random.nextInt(0, 670))
+			Point(index * (1200 / POINT_COUNT), calculateY(index))
 		}
 
 		val windowClass = alloc<WNDCLASSW>()
@@ -76,7 +79,6 @@ private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): L
 		when (msg.toInt()) {
 			WM_KEYDOWN -> {
 				updatePoints()
-
 				InvalidateRect(window, null, TRUE)
 			}
 
@@ -107,7 +109,12 @@ private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): L
 }
 
 private fun updatePoints() {
+	timeOffset += FREQUENCY
 	points = MutableList(POINT_COUNT) { index ->
-		Point(index * (1200 / POINT_COUNT), Random.nextInt(0, 670))
+		Point(index * (1200 / POINT_COUNT), calculateY(index))
 	}
+}
+
+private fun calculateY(index: Int): Int {
+	return ((AMPLITUDE * sin((index * FREQUENCY) + timeOffset)).toInt() + (670 / 2)).coerceIn(0..670)
 }

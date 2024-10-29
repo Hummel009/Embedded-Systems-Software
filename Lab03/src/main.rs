@@ -18,7 +18,7 @@ extern crate libm;
 static mut BTN_MODE_SELECT: MaybeUninit<gpioa::PA1<Input<PullUp>>> = MaybeUninit::uninit();
 static FLAG: AtomicBool = AtomicBool::new(false);
 
-static mut VALUE_BITS: [u8; 32] = [48; 32];
+static mut VALUE_BITS: [u8; 4] = [0; 4];
 
 #[entry]
 fn main() -> ! {
@@ -168,18 +168,16 @@ fn main() -> ! {
             );
         }
 
-        let value = generate_sine_wave(a, f, i, 44100, phi);
-
-        let bits = value.to_bits();
+        let value = generate_sine_wave(a * 10, f * 10, i, 44100, phi * 10);
 
         unsafe {
-            for i in 0..32 {
-                VALUE_BITS[i] = if (bits >> (31 - i)) & 1 == 1 { 49 } else { 48 };
-            }
+            VALUE_BITS = value.to_be_bytes();
 
             let (_, loop_tx) = tx.write(&VALUE_BITS).wait();
             tx = loop_tx;
         }
+
+        delay(100_000);
     }
 }
 

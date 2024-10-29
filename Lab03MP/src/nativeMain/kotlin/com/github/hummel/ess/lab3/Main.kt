@@ -5,8 +5,9 @@ import platform.windows.*
 import kotlin.math.max
 import kotlin.math.sin
 
+
 const val rgbWhite: COLORREF = 0x00FFFFFFu
-const val POINT_COUNT: Int = 1200
+const val POINT_COUNT: Int = 100
 const val AMPLITUDE: Double = 9.0
 const val FREQUENCY: Double = 1.0
 
@@ -109,6 +110,7 @@ private fun wndProc(window: HWND?, msg: UINT, wParam: WPARAM, lParam: LPARAM): L
 fun threadOperate(lpParameter: LPVOID?): DWORD {
 	while (isRunning) {
 		timeOffset += FREQUENCY
+
 		points = MutableList(POINT_COUNT) { index ->
 			Point(
 				index * (1200 / POINT_COUNT),
@@ -118,7 +120,7 @@ fun threadOperate(lpParameter: LPVOID?): DWORD {
 
 		InvalidateRect(GetForegroundWindow(), null, TRUE)
 
-		Sleep(1u)
+		Sleep(100u)
 	}
 	return 0u
 }

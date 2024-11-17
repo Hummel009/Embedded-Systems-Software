@@ -2,7 +2,6 @@
 #![no_main]
 #![no_std]
 
-use cortex_m::asm::delay;
 use cortex_m_rt::entry;
 use panic_halt as _;
 use panic_halt as _;
@@ -13,14 +12,13 @@ use stm32f1xx_hal::serial::{Config, Serial};
 
 #[entry]
 fn main() -> ! {
-    let mut dp = pac::Peripherals::take().unwrap();
+    let dp = pac::Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
-    let mut gpioa = dp.GPIOA.split();
     let mut gpiod = dp.GPIOD.split();
 
     let mut afio = dp.AFIO.constrain();

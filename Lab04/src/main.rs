@@ -3,73 +3,30 @@
 #![no_std]
 
 use cortex_m::asm::delay;
-use cortex_m::singleton;
 use cortex_m_rt::entry;
 use panic_halt as _;
 use panic_halt as _;
 use stm32f1xx_hal::gpio::*;
 use stm32f1xx_hal::pac;
-use stm32f1xx_hal::prelude::*;
-use stm32f1xx_hal::serial::{Config, Serial};
 
 #[entry]
 fn main() -> ! {
     let dp = pac::Peripherals::take().unwrap();
 
-    let mut flash = dp.FLASH.constrain();
-    let rcc = dp.RCC.constrain();
+    let mut gpioa = dp.GPIOA.split();
+    let mut gpiob = dp.GPIOB.split();
+    let mut gpioc = dp.GPIOC.split();
 
-    let clocks = rcc.cfgr.freeze(&mut flash.acr);
+    let ir = gpiob.pb10.into_floating_input(&mut gpiob.crh);
 
-    let mut gpiod = dp.GPIOD.split();
-
-    let mut afio = dp.AFIO.constrain();
-    let channels = dp.DMA1.split();
-
-    let rx = gpiod.pd5.into_alternate_push_pull(&mut gpiod.crl);
-    let tx = gpiod.pd6;
-
-    let serial = Serial::new(
-        dp.USART2,
-        (rx, tx),
-        &mut afio.mapr,
-        Config::default().baudrate(115200.bps()),
-        &clocks,
-    );
-
-    let mut rx = serial.rx.with_dma(channels.6);
-
-    let mut led_r = gpiod.pd9.into_push_pull_output(&mut gpiod.crh);
-    let mut led_g = gpiod.pd10.into_push_pull_output(&mut gpiod.crh);
-    let mut led_b = gpiod.pd11.into_push_pull_output(&mut gpiod.crh);
+    let mut led_r = gpioc.pc7.into_push_pull_output(&mut gpioc.crl);
+    let mut led_g = gpioa.pa7.into_push_pull_output(&mut gpioa.crl);
+    let mut led_b = gpiob.pb6.into_push_pull_output(&mut gpiob.crl);
 
     let mut stage = 0;
 
-    let mut buf = singleton!(: [u8; 8] = [0; 8]).unwrap();
-
-    led_g.set_low();
-    led_g.set_low();
-    led_b.set_low();
-
-    delay(2_000_000);
-
-    led_g.set_high();
-    led_g.set_high();
-    led_b.set_high();
-
-    delay(2_000_000);
-
-    led_g.set_low();
-    led_g.set_low();
-    led_b.set_low();
-
     loop {
-
-        let (loop_buf, loop_rx) = rx.read(buf).wait();
-        rx = loop_rx;
-        buf = loop_buf;
-
-        if buf.iter().all(|&x| x == 0) {
+        if ir.is_low() {
             if stage == 0 {
                 stage = 1;
             } else if stage == 1 {

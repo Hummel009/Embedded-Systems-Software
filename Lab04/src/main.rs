@@ -2,6 +2,8 @@
 #![no_main]
 #![no_std]
 
+use cortex_m::asm::delay;
+use cortex_m::singleton;
 use cortex_m_rt::entry;
 use panic_halt as _;
 use panic_halt as _;
@@ -24,11 +26,9 @@ fn main() -> ! {
     let mut afio = dp.AFIO.constrain();
     let channels = dp.DMA1.split();
 
-    //pd5?
     let rx = gpiod.pd5.into_alternate_push_pull(&mut gpiod.crl);
     let tx = gpiod.pd6;
 
-    //9600?
     let serial = Serial::new(
         dp.USART2,
         (rx, tx),
@@ -37,7 +37,7 @@ fn main() -> ! {
         &clocks,
     );
 
-    let mut tx = serial.tx.with_dma(channels.7);
+    let mut rx = serial.rx.with_dma(channels.6);
 
     let mut led_r = gpiod.pd9.into_push_pull_output(&mut gpiod.crh);
     let mut led_g = gpiod.pd10.into_push_pull_output(&mut gpiod.crh);
@@ -45,14 +45,15 @@ fn main() -> ! {
 
     let mut stage = 0;
 
-    loop {
-        unsafe {
-            //откуда читать?
-            //let received = rx.read().unwrap();
-           // tx = loop_tx;
-        }
+    let mut buf = singleton!(: [u8; 8] = [0; 8]).unwrap();
 
-        /*if rx.is_low() {
+    loop {
+
+        let (loop_buf, loop_rx) = rx.read(buf).wait();
+        rx = loop_rx;
+        buf = loop_buf;
+
+        if buf.iter().all(|&x| x == 0) {
             if stage == 0 {
                 stage = 1;
             } else if stage == 1 {
@@ -78,6 +79,6 @@ fn main() -> ! {
             led_r.set_low();
             led_g.set_low();
             led_b.set_high();
-        }*/
+        }
     }
 }

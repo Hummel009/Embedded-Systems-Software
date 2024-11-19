@@ -47,6 +47,22 @@ fn main() -> ! {
 
     let mut buf = singleton!(: [u8; 8] = [0; 8]).unwrap();
 
+    led_g.set_low();
+    led_g.set_low();
+    led_b.set_low();
+
+    delay(2_000_000);
+
+    led_g.set_high();
+    led_g.set_high();
+    led_b.set_high();
+
+    delay(2_000_000);
+
+    led_g.set_low();
+    led_g.set_low();
+    led_b.set_low();
+
     loop {
 
         let (loop_buf, loop_rx) = rx.read(buf).wait();

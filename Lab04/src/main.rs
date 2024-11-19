@@ -29,12 +29,12 @@ fn main() -> ! {
     let mut gpioa = dp.GPIOA.split();
     let mut gpiob = dp.GPIOB.split();
 
-     let c1 = gpioa.pa6.into_alternate_push_pull(&mut gpioa.crl);
-     let c2 = gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl);
-     let c3 = gpiob.pb0.into_alternate_push_pull(&mut gpiob.crl);
-     let c4 = gpiob.pb1.into_alternate_push_pull(&mut gpiob.crl);
+    let c1 = gpioa.pa6.into_alternate_push_pull(&mut gpioa.crl);
+    let c2 = gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl);
+    let c3 = gpiob.pb0.into_alternate_push_pull(&mut gpiob.crl);
+    let c4 = gpiob.pb1.into_alternate_push_pull(&mut gpiob.crl);
 
-     let pins = (c1, c2, c3, c4);
+    let pins = (c1, c2, c3, c4);
 
     let mut pwm = dp.TIM3.pwm_hz::<Tim3NoRemap, _, _>(pins, &mut afio.mapr, 1.kHz(), &clocks);
 

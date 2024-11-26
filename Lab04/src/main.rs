@@ -36,17 +36,17 @@ fn main() -> ! {
 
     let pins = (c1, c2, c3, c4);
 
-    let mut pwm = dp.TIM3.pwm_hz::<Tim3NoRemap, _, _>(pins, &mut afio.mapr, 1.kHz(), &clocks);
+    let mut pwm = dp.TIM3.pwm_hz::<Tim3NoRemap, _, _>(pins, &mut afio.mapr, 100.kHz(), &clocks);
 
     pwm.enable(Channel::C1);
     pwm.enable(Channel::C2);
     pwm.enable(Channel::C3);
 
-    pwm.set_period(ms(500).into_rate());
+    pwm.set_period(ms(1).into_rate());
 
     let max = pwm.get_max_duty();
 
-    pwm.set_duty(Channel::C2, max / 4);
+    pwm.set_duty(Channel::C2, max / 40);
 
     loop {}
 }

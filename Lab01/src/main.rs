@@ -2,14 +2,15 @@
 #![no_main]
 #![no_std]
 
-use core::mem::MaybeUninit;
-use core::sync::atomic::{AtomicBool, Ordering};
-use cortex_m_rt::entry;
 use panic_halt as _;
-use stm32f1xx_hal::gpio::*;
-use stm32f1xx_hal::pac;
-use stm32f1xx_hal::pac::interrupt;
-use stm32f1xx_hal::prelude::*;
+
+use core::{
+    mem::MaybeUninit,
+    sync::atomic::{AtomicBool, Ordering},
+};
+use cortex_m_rt::entry;
+
+use stm32f1xx_hal::{gpio::*, pac, pac::interrupt, prelude::*};
 
 static mut BUTTON: MaybeUninit<gpioc::PC13<Input<Floating>>> = MaybeUninit::uninit();
 static FLAG: AtomicBool = AtomicBool::new(false);

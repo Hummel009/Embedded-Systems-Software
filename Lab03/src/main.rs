@@ -2,16 +2,22 @@
 #![no_main]
 #![no_std]
 
-use core::mem::MaybeUninit;
-use core::sync::atomic::{AtomicBool, Ordering};
-use cortex_m::asm::delay;
-use cortex_m_rt::entry;
 use panic_halt as _;
-use stm32f1xx_hal::gpio::*;
-use stm32f1xx_hal::pac;
-use stm32f1xx_hal::pac::interrupt;
-use stm32f1xx_hal::prelude::*;
-use stm32f1xx_hal::serial::{Config, Serial};
+
+use core::{
+    mem::MaybeUninit,
+    sync::atomic::{AtomicBool, Ordering},
+};
+
+use cortex_m_rt::entry;
+
+use stm32f1xx_hal::{
+    gpio::*,
+    pac,
+    pac::interrupt,
+    prelude::*,
+    serial::{Config, Serial},
+};
 
 extern crate libm;
 
@@ -22,12 +28,15 @@ static mut VALUE_BITS: [u8; 4] = [0; 4];
 
 #[entry]
 fn main() -> ! {
+    let cp = cortex_m::Peripherals::take().unwrap();
     let mut dp = pac::Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
 
-    let clocks = rcc.cfgr.freeze(&mut flash.acr);
+    let clocks = rcc.cfgr.sysclk(8.MHz()).freeze(&mut flash.acr);
+
+    let mut delay = cp.SYST.delay(&clocks);
 
     let mut gpioa = dp.GPIOA.split();
     let mut gpiob = dp.GPIOB.split();
@@ -120,7 +129,7 @@ fn main() -> ! {
 
         if mode == "a" {
             if btn_switch.is_low() {
-                delay(2_000_000);
+                delay.delay(1.secs());
                 if a >= 0 && a < 9 {
                     a += 1;
                 } else {
@@ -136,7 +145,7 @@ fn main() -> ! {
             );
         } else if mode == "f" {
             if btn_switch.is_low() {
-                delay(2_000_000);
+                delay.delay(1.secs());
                 if f >= 0 && f < 9 {
                     f += 1;
                 } else {
@@ -152,7 +161,7 @@ fn main() -> ! {
             );
         } else if mode == "phi" {
             if btn_switch.is_low() {
-                delay(2_000_000);
+                delay.delay(1.secs());
                 if phi >= 0 && phi < 9 {
                     phi += 1;
                 } else {
@@ -177,7 +186,7 @@ fn main() -> ! {
             tx = loop_tx;
         }
 
-        delay(100_000);
+        delay.delay(100.millis());
     }
 }
 

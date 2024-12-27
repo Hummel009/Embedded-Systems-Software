@@ -2,22 +2,31 @@
 #![no_main]
 #![no_std]
 
-use core::mem::MaybeUninit;
-use core::sync::atomic::{AtomicBool, Ordering};
-use cortex_m::asm::delay;
-use cortex_m_rt::entry;
 use panic_halt as _;
-use stm32f1xx_hal::gpio::*;
-use stm32f1xx_hal::pac;
-use stm32f1xx_hal::pac::interrupt;
-use stm32f1xx_hal::prelude::*;
+
+use core::{
+    mem::MaybeUninit,
+    sync::atomic::{AtomicBool, Ordering},
+};
+
+use cortex_m_rt::entry;
+
+use stm32f1xx_hal::{gpio::*, pac::{self, interrupt}, prelude::*, timer::SysDelay};
 
 static mut BUTTON: MaybeUninit<gpioa::PA1<Input<PullUp>>> = MaybeUninit::uninit();
 static FLAG: AtomicBool = AtomicBool::new(false);
 
 #[entry]
 fn main() -> ! {
+    let cp = cortex_m::Peripherals::take().unwrap();
     let mut dp = pac::Peripherals::take().unwrap();
+
+    let mut flash = dp.FLASH.constrain();
+    let rcc = dp.RCC.constrain();
+
+    let clocks = rcc.cfgr.sysclk(8.MHz()).freeze(&mut flash.acr);
+
+    let mut delay = cp.SYST.delay(&clocks);
 
     let mut gpioa = dp.GPIOA.split();
     let mut gpiob = dp.GPIOB.split();
@@ -55,7 +64,7 @@ fn main() -> ! {
         [1, 3, 1, 2, 1, 3, 0, 0, 0],
         [3, 1, 2, 3, 1, 2, 1, 0, 0],
         [2, 3, 1, 3, 2, 1, 2, 3, 0],
-        [1, 3, 2, 3, 1, 2, 3, 1, 2]
+        [1, 3, 2, 3, 1, 2, 3, 1, 2],
     ];
 
     let mut best_level = 0;
@@ -83,7 +92,13 @@ fn main() -> ! {
                 led3.set_high();
                 led4.set_low();
 
-                display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level, [true, false, false, false]);
+                display_number(
+                    &mut ds,
+                    &mut sh_cp,
+                    &mut st_cp,
+                    best_level,
+                    [true, false, false, false],
+                );
             }
 
             if FLAG.load(Ordering::SeqCst) {
@@ -97,13 +112,19 @@ fn main() -> ! {
             if !stage2_init {
                 stage2_init = true;
 
-                display_number(&mut ds, &mut sh_cp, &mut st_cp, current_level, [true, false, false, false]);
+                display_number(
+                    &mut ds,
+                    &mut sh_cp,
+                    &mut st_cp,
+                    current_level,
+                    [true, false, false, false],
+                );
 
-                delay(2_000_000);
+                delay.delay(1.secs());
 
                 let sequence = levels[(current_level - 1) as usize];
 
-                show_sequence(sequence, &mut led1, &mut led2, &mut led3, &mut led4);
+                show_sequence(sequence, &mut led1, &mut led2, &mut led3, &mut led4, &mut delay);
 
                 stage = 3;
             }
@@ -117,7 +138,7 @@ fn main() -> ! {
                     error = true;
                 } else {
                     led1.set_low();
-                    delay(2_000_000);
+                    delay.delay(1.secs());
                     led1.set_high();
 
                     step += 1;
@@ -128,7 +149,7 @@ fn main() -> ! {
                     error = true;
                 } else {
                     led2.set_low();
-                    delay(2_000_000);
+                    delay.delay(1.secs());
                     led2.set_high();
 
                     step += 1;
@@ -139,7 +160,7 @@ fn main() -> ! {
                     error = true;
                 } else {
                     led3.set_low();
-                    delay(2_000_000);
+                    delay.delay(1.secs());
                     led3.set_high();
 
                     step += 1;
@@ -155,12 +176,30 @@ fn main() -> ! {
                 current_level = 1;
 
                 for _ in 0..100000 {
-                    display_number(&mut ds, &mut sh_cp, &mut st_cp, 10, [false, false, true, false]);
-                    display_number(&mut ds, &mut sh_cp, &mut st_cp, 11, [false, true, false, false]);
-                    display_number(&mut ds, &mut sh_cp, &mut st_cp, 11, [true, false, false, false]);
+                    display_number(
+                        &mut ds,
+                        &mut sh_cp,
+                        &mut st_cp,
+                        10,
+                        [false, false, true, false],
+                    );
+                    display_number(
+                        &mut ds,
+                        &mut sh_cp,
+                        &mut st_cp,
+                        11,
+                        [false, true, false, false],
+                    );
+                    display_number(
+                        &mut ds,
+                        &mut sh_cp,
+                        &mut st_cp,
+                        11,
+                        [true, false, false, false],
+                    );
                 }
-                
-                delay(2_000_000);
+
+                delay.delay(1.secs());
 
                 stage = 1;
 
@@ -175,16 +214,22 @@ fn main() -> ! {
                     best_level = current_level;
                 }
 
-                display_number(&mut ds, &mut sh_cp, &mut st_cp, best_level, [true, false, false, false]);
+                display_number(
+                    &mut ds,
+                    &mut sh_cp,
+                    &mut st_cp,
+                    best_level,
+                    [true, false, false, false],
+                );
 
-                delay(2_000_000);
+                delay.delay(1.secs());
 
                 led1.set_low();
-                delay(2_000_000);
+                delay.delay(1.secs());
                 led2.set_low();
-                delay(2_000_000);
+                delay.delay(1.secs());
                 led3.set_low();
-                delay(2_000_000);
+                delay.delay(1.secs());
                 led1.set_high();
                 led2.set_high();
                 led3.set_high();
@@ -205,7 +250,7 @@ fn display_number(
     sh_cp: &mut Pin<'A', 8, Output>,
     st_cp: &mut Pin<'B', 5, Output>,
     number: u8,
-    placement: [bool; 4]
+    placement: [bool; 4],
 ) {
     let segments = [
         // централ, верх-лево, низ-лево, низ, низ-право, верх-право, верх
@@ -272,43 +317,33 @@ fn show_sequence(
     led2: &mut Pin<'A', 6, Output>,
     led3: &mut Pin<'A', 7, Output>,
     led4: &mut Pin<'B', 6, Output>,
+    delay: &mut SysDelay
 ) {
     for &num in &sequence {
         if num > 0 {
-            let index = num;
-            if index == 1 {
-                led1.set_low();
-            } else if index == 2 {
-                led2.set_low();
-            } else if index == 3 {
-                led3.set_low();
-            } else if index == 4 {
-                led4.set_low();
+            match num {
+                1 => led1.set_low(),
+                2 => led2.set_low(),
+                3 => led3.set_low(),
+                4 => led4.set_low(),
+                _ => unreachable!(),
             }
 
-            delay(2_000_000);
-            
-            if index == 1 {
-                led1.set_high();
-            } else if index == 2 {
-                led2.set_high();
-            } else if index == 3 {
-                led3.set_high();
-            } else if index == 4 {
-                led4.set_high();
+            delay.delay(1.secs());
+
+            match num {
+                1 => led1.set_high(),
+                2 => led2.set_high(),
+                3 => led3.set_high(),
+                4 => led4.set_high(),
+                _ => unreachable!(),
             }
         }
     }
 }
 
 fn count_non_zeros(sequence: [i32; 9]) -> usize {
-    let mut count = 0;
-    for &num in &sequence {
-        if num != 0 {
-            count += 1;
-        }
-    }
-    count
+    sequence.iter().filter(|&&num| num != 0).count()
 }
 
 #[interrupt]

@@ -25,6 +25,8 @@ fn main() -> ! {
 
     let clocks = rcc.cfgr.sysclk(8.MHz()).freeze(&mut flash.acr);
 
+    let mut delay = cp.SYST.delay(&clocks);
+
     let mut gpioa = dp.GPIOA.split();
     let mut gpioc = dp.GPIOC.split();
     let mut afio = dp.AFIO.constrain();
@@ -41,8 +43,6 @@ fn main() -> ! {
     unsafe {
         pac::NVIC::unmask(pac::Interrupt::EXTI15_10);
     }
-
-    let mut delay = cp.SYST.delay(&clocks);
 
     loop {
         if FLAG.load(Ordering::SeqCst) {
